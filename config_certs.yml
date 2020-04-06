@@ -1,0 +1,27 @@
+---
+- name: config google certs
+  remote_user: admin
+  become: yes
+  hosts: all
+  tasks:
+
+  - name: Get a cert from google
+    shell: openssl s_client -host google.com -port 443 -showcerts 2>/dev/null | sed --quiet '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | csplit --prefix=root - "/-----END CERTIFICATE-----/+1" "{*}" --elide-empty-files --quiet
+
+  - name: move files
+    copy:
+      src: /home/admin/{{ item.s }}
+      dest: /etc/pki/ca-trust/source/anchors/{{ item.d }}
+      remote_src: yes
+    with_items:
+      - {s: root00, d: root1.crt}
+      - {s: root01, d: root2.crt}
+
+  - name: update certs
+    shell: update-ca-trust extract
+
+  - name: restart docker
+    service:
+      name: docker
+      state: restarted
+    delegate_to: application
