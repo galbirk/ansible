@@ -7,10 +7,12 @@
 
   - name: Get a cert from google
     shell: openssl s_client -host google.com -port 443 -showcerts 2>/dev/null | sed --quiet '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | csplit --prefix=root - "/-----END CERTIFICATE-----/+1" "{*}" --elide-empty-files --quiet
+    args:
+      chdir: ~/
 
   - name: move files
     copy:
-      src: /home/admin/{{ item.s }}
+      src: ~/{{ item.s }}
       dest: /etc/pki/ca-trust/source/anchors/{{ item.d }}
       remote_src: yes
     with_items:
